@@ -1,12 +1,14 @@
 import { program } from "commander";
+import multer from "multer";
 import fs from "node:fs/promises";
 import path from "node:path";
 import express from "express";
+import crypto, { randomUUID } from "node:crypto";
 
 program
-  .requiredOption('-h, --host <host>', 'host address')
+  .requiredOption("-h, --host <host>", "host address")
   .requiredOption("-c, --cache <path>", "path to the input JSON file")
-  .requiredOption('-p, --port <port>', 'server port', (value) => {
+  .requiredOption("-p, --port <port>", "server port", (value) => {
     const parsed = Number(value);
     if (!parsed || parsed < 1 || parsed > 65535) {
       console.error("port must be number between 1 and 65535");
@@ -23,14 +25,173 @@ async function setupCacheDir(path) {
     await fs.mkdir(path, { recursive: true });
   } catch (error) {
     console.log(`error: ${error.message}`);
-    process.exit(1)
+    process.exit(1);
   }
 }
 
 const cacheDir = path.resolve(opts.cache);
 await setupCacheDir(cacheDir);
 
+const inventoryList = [];
+let idCounter = 1;
+function generateId() {
+  return idCounter++;
+}
+
+const BASE_URL = `http://${opts.host}:${opts.port}`;
+
 const app = express();
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(express.static("static"));
+app.use("/photos", express.static(cacheDir));
+
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, cacheDir);
+  },
+  filename: function (req, file, cb) {
+    const uniqueSuffix = randomUUID();
+    const extension = path.extname(file.originalname);
+    cb(null, file.fieldname + "-" + uniqueSuffix + extension);
+  },
+});
+const upload = multer({ storage });
+
+app.post("/register", upload.single("photo"), (req, res) => {
+  const { inventory_name, description } = req.body;
+  const photo = req.file;
+  if (!inventory_name) {
+    return res.status(400).json({ error: "inventory_name is required" });
+  }
+  const newId = generateId();
+  const newItem = {
+    id: newId,
+    inventory_name,
+    description: description || "",
+    photo_filename: photo ? photo.filename : null,
+    photo_url: photo ? `${BASE_URL}/inventory/${newId}/photo` : null,
+  };
+
+  inventoryList.push(newItem);
+
+  res.status(201).json({ message: "inventory registered successfully" });
+});
+
+app.get("/inventory", (req, res) => {
+  if (inventoryList.length === 0) {
+    return res.status(404).json({ error: "no inventory items found" });
+  }
+  res.status(200).json(inventoryList);
+});
+
+app.get("/inventory/:id", (req, res) => {
+  const itemId = Number(req.params.id);
+  const item = inventoryList.find((i) => i.id === itemId);
+  if (!item) {
+    return res.status(404).json({ error: "inventory item not found" });
+  }
+  res.status(200).json(item);
+});
+
+app.put("/inventory/:id", (req, res) => {
+  const itemId = Number(req.params.id);
+  const item = inventoryList.find((i) => i.id === itemId);
+  if (!item) {
+    return res.status(404).json({ error: "inventory item not found" });
+  }
+  const { inventory_name, description } = req.body;
+  if (inventory_name) {
+    item.inventory_name = inventory_name;
+  }
+  if (description) {
+    item.description = description;
+  }
+  res.status(200).json({ message: "inventory item updated successfully" });
+});
+
+app.delete("/inventory/:id", (req, res) => {
+  const itemId = Number(req.params.id);
+  const itemIndex = inventoryList.findIndex((i) => i.id === itemId);
+  if (itemIndex === -1) {
+    return res.status(404).json({ error: "inventory item not found" });
+  }
+  const [deletedItem] = inventoryList.splice(itemIndex, 1);
+  if (deletedItem.photo_filename) {
+    const photoPath = path.join(cacheDir, deletedItem.photo_filename);
+    fs.unlink(photoPath).catch((err) => {
+      console.error(`failed to delete photo file: ${err.message}`);
+    });
+  }
+  res.status(200).json({ message: "inventory item deleted successfully" });
+});
+
+app.get("/inventory/:id/photo", (req, res) => {
+  const itemId = Number(req.params.id);
+  const item = inventoryList.find((i) => i.id === itemId);
+  if (!item) {
+    return res.status(404).json({ error: "inventory item not found" });
+  }
+  if (!item.photo_filename) {
+    return res
+      .status(404)
+      .json({ error: "photo not found for this inventory item" });
+  }
+  const photoPath = path.join(cacheDir, item.photo_filename);
+  res.setHeader("Content-Type", "image/jpeg");
+  res.sendFile(photoPath);
+});
+
+app.put("/inventory/:id/photo", upload.single("photo"), (req, res) => {
+  const itemId = Number(req.params.id);
+  const item = inventoryList.find((i) => i.id === itemId);
+  if (!item) {
+    return res.status(404).json({ error: "inventory item not found" });
+  }
+  const photo = req.file;
+  if (!photo) {
+    return res.status(400).json({ error: "photo file is required" });
+  }
+  if (item.photo_filename) {
+    const oldPhotoPath = path.join(cacheDir, item.photo_filename);
+    fs.unlink(oldPhotoPath).catch((err) => {
+      console.error(`failed to delete old photo file: ${err.message}`);
+    });
+  }
+  item.photo_filename = photo.filename;
+  item.photo_url = `${BASE_URL}/inventory/${itemId}/photo`;
+  res.status(200).json({ message: "photo updated successfully" });
+});
+
+app.post("/search", (req, res) => {
+  const { id, includePhoto } = req.body;
+
+  const itemId = Number(id);
+
+  if (!itemId) {
+    return res.status(400).json({ error: "id is required" });
+  }
+
+  const item = inventoryList.find((i) => i.id === itemId);
+
+  if (!item) {
+    return res.status(404).json({ error: "inventory item not found" });
+  }
+
+  const result = { ...item };
+
+  if (includePhoto) {
+    if (result.photo_filename) {
+      result.description += ` ${result.photo_url}`;
+    }
+  }
+  res.status(200).json(result);
+
+})
+
+app.use((req, res) => {
+  res.status(405).json({ error: "Method not allowed" });
+});
 
 app.listen(opts.port, opts.host, () => {
   console.log(`server is running at http://${opts.host}:${opts.port}`);
