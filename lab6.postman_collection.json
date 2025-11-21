@@ -1,0 +1,262 @@
+{
+	"info": {
+		"_postman_id": "18403477-eed8-4712-9dc5-a91d6d17b37f",
+		"name": "lab6",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "50238652",
+		"_collection_link": "https://zakhar-ilchuk-314242.postman.co/workspace/John-Doe's-Workspace~5b9622b9-cea2-4f22-8d7d-ab1d47706902/collection/50238652-18403477-eed8-4712-9dc5-a91d6d17b37f?action=share&source=collection_link&creator=50238652"
+	},
+	"item": [
+		{
+			"name": "RegisterForm",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8080/RegisterForm.html",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"RegisterForm.html"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "SearchForm",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8080/SearchForm.html",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"SearchForm.html"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Add new item",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "inventory_name",
+							"value": "Wireless Mouse",
+							"type": "text"
+						},
+						{
+							"key": "description",
+							"value": "A high-quality wireless mouse with ergonomic design and long-lasting battery life, ideal for everyday computing and gaming.",
+							"type": "text"
+						},
+						{
+							"key": "photo",
+							"type": "file",
+							"src": "/home/zakhar/Downloads/2.jpg"
+						}
+					]
+				},
+				"url": {
+					"raw": "http://localhost:8080/register",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"register"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get all from inventory",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8080/inventory",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"inventory"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get from inventory",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8080/inventory/1",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"inventory",
+						"1"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Update fields",
+			"request": {
+				"method": "PUT",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"inventory_name\": \"Wireless Charging Pad\",\n  \"description\": \"A sleek mouse pad with built-in wireless charging, providing a smooth surface for precision tracking while powering compatible devices.\"\n}\n",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8080/inventory/1",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"inventory",
+						"1"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Delete item",
+			"request": {
+				"method": "DELETE",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8080/inventory/1",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"inventory",
+						"1"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get photo of item",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8080/inventory/1/photo",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"inventory",
+						"1",
+						"photo"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Update photo of item",
+			"request": {
+				"method": "PUT",
+				"header": [],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "photo",
+							"type": "file",
+							"src": "/home/zakhar/Downloads/3-Tasten-Maus_Microsoft.jpg"
+						}
+					]
+				},
+				"url": {
+					"raw": "http://localhost:8080/inventory/1/photo",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"inventory",
+						"1",
+						"photo"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "New Request",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "urlencoded",
+					"urlencoded": [
+						{
+							"key": "id",
+							"value": "1",
+							"type": "text"
+						},
+						{
+							"key": "includePhoto",
+							"value": "on",
+							"type": "text"
+						}
+					]
+				},
+				"url": {
+					"raw": "http://localhost:8080/search",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"search"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}

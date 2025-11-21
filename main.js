@@ -420,6 +420,7 @@ app.put("/inventory/:id/photo", upload.single("photo"), (req, res) => {
 app.post("/search", (req, res) => {
   const { id, includePhoto } = req.body;
   const itemId = Number(id);
+  console.log(includePhoto);
   
   if (!itemId) {
     return res.status(400).json({ error: "id is required" });
@@ -433,7 +434,7 @@ app.post("/search", (req, res) => {
 
   const result = { ...item };
 
-  if (includePhoto) {
+  if (includePhoto == "on") {
     if (result.photo_filename) {
       result.description += ` ${result.photo_url}`;
     }
